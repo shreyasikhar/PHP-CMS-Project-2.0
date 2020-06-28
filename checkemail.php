@@ -4,11 +4,11 @@
 <?php
     if(isset($_SESSION['username']))
     {
-        header('location:/cms-theme/');
+        header('location:/');
     }
     if(!isset($_GET['email']))
     {
-        header('location:/cms-theme/');
+        header('location:/');
     }
     require './vendor/autoload.php';
 ?>
@@ -39,7 +39,7 @@
         $db_otp = $row['otp'];
         if($db_otp != $otp)
         {
-            $error['otp'] = 'Wrong OTP entered';
+            $error['otp'] = '*Wrong OTP entered';
         }
 
         foreach($error as $key => $value)
@@ -54,7 +54,15 @@
             // login_user($_POST['username'], $_POST['password']);
             query("update temp_users set flag = 1 where user_email='$email'");
             register_user($db_fname, $db_lname, $db_username, $db_email, $db_password);
-            header('location:login.php');
+            $result = query("select user_id from users where user_email='$db_email'");
+            $row = mysqli_fetch_array($result);
+            $_SESSION['user_id'] = $row['user_id'];
+            $_SESSION['username'] = $db_username;
+            $_SESSION['firstname'] = $db_fname;
+            $_SESSION['lastname'] = $db_lname;
+            $_SESSION['user_role'] = 'subscriber';
+            $_SESSION['user_email'] = $db_email;
+            header("location:admin/");
         }
 
     }
@@ -110,7 +118,7 @@
                   <form class="user" method="post">
                     <div class="form-group">
                       <input type="text" class="form-control form-control-user" id="exampleInputEmail" aria-describedby="emailHelp" name="otp" placeholder="Enter OTP">
-                      <p><?php echo isset($error['otp']) ? $error['otp'] : '' ?></p>
+                      <p class="text-danger"><?php echo isset($error['otp']) ? $error['otp'] : '' ?></p>
                     </div>
                     <button type="submit" class="btn btn-primary btn-user btn-block" name="verify">Submit OTP</button>
                   </form>
@@ -151,3 +159,4 @@
 </body>
 
 </html>
+

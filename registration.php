@@ -9,30 +9,11 @@
 <?php
     if(isset($_SESSION['username']))
     {
-        header('location:/cms-theme/');
+        header('location:/');
     }
     require './vendor/autoload.php';
 ?>
 <?php
-    // Setting language variables 
-    if(isset($_GET['lang']) && !empty($_GET['lang']))
-    {
-        $_SESSION['lang'] = $_GET['lang'];
-
-        if(isset($_SESSION['lang']) && $_SESSION['lang'] != $_GET['lang'])
-        {
-            echo "<script type='text/javascript'>location.reload();</script>";
-        }
-    }    
-    if(isset($_SESSION['lang']))
-    {
-        include "includes/".$_SESSION['lang'].".php";
-    }
-    else
-    {
-        include "includes/en.php";
-    }
-
     if($_SERVER['REQUEST_METHOD'] == "POST")
     {
         $fname = trim($_POST['fname']);
@@ -92,6 +73,21 @@
         } //foreach
         if(empty($error))
         {
+            $testQuery = "select * from temp_users where user_email='$email'";
+            $testResult = mysqli_query($connection, $testQuery);
+            if(mysqli_num_rows($testResult) >= 1)
+            {
+                mysqli_query($connection, "delete from temp_users where user_email ='$email'");
+            }
+            
+            $testQuery1 = "select * from users where user_email='$email'";
+            $testResult1 = mysqli_query($connection, $testQuery1);
+            $flag1=false;
+            if(mysqli_num_rows($testResult1) >= 1)
+            {
+                $success = "You have already created an account with ".$email." Kindly login <a href='login.php'>here</a>";
+                $flag1=true;
+            }
             temp_register_user($fname, $lname, $username, $email, $password);
             $result = query("select otp from temp_users where user_email='$email'");
             $row = mysqli_fetch_array($result);
@@ -99,39 +95,42 @@
             /*
                 Configure PHPMailer
             */
-            require 'PHPMailer/src/Exception.php';
-            require 'PHPMailer/src/PHPMailer.php';
-            require 'PHPMailer/src/SMTP.php';
-            require 'classes/Config.php';
-            $mail = new PHPMailer();
-            //$mail->SMTPDebug = SMTP::DEBUG_SERVER;                      
-            //$mail->SMTPDebug = 2;                      
-            $mail->isSMTP();                                           
-            $mail->Host       = Config::SMTP_HOST;                    
-            $mail->Username   = Config::SMTP_USER;                    
-            $mail->Password   = Config::SMTP_PASSWORD; 
-            $mail->Port       = Config::SMTP_PORT;                              
-            $mail->SMTPSecure = 'ssl';           
-            $mail->SMTPAuth   = true;  
-            $mail->isHTML(true);  
-            $mail->CharSet = 'UTF-8'; 
-            
-            $mail->setFrom('enlectic@gmail.com', 'Blog Admin');
-            $mail->addAddress($email, "Blog User");
-            $mail->Subject = 'Verify Email using OTP';
-            $mail->Body = '<p style="background-color:#000; color:#fff;">Your OTP is '. $otpmail .'.<br/>Please click to enter OTP and verify email
-            <a href="http://localhost/cms-theme/checkemail.php?email='.$email.'">http://localhost/cms-theme/checkemail.php?email='.$email.'</a>
-            </p>';
-
-            if($mail->send())
+            if(!$flag1)
             {
-                $emailSent = true;
-                $success = "You will receive an OTP on your mail account for verification purpose only!";
-            }
-            else
-            {
-                echo 'Email send limit exceeded, try after sometime';
-            }
+                require 'PHPMailer/src/Exception.php';
+                require 'PHPMailer/src/PHPMailer.php';
+                require 'PHPMailer/src/SMTP.php';
+                require 'classes/Config.php';
+                $mail = new PHPMailer();
+                //$mail->SMTPDebug = SMTP::DEBUG_SERVER;                      
+                //$mail->SMTPDebug = 2;                      
+                $mail->isSMTP();                                           
+                $mail->Host       = Config::SMTP_HOST;                    
+                $mail->Username   = Config::SMTP_USER;                    
+                $mail->Password   = Config::SMTP_PASSWORD; 
+                $mail->Port       = Config::SMTP_PORT;                              
+                $mail->SMTPSecure = 'ssl';           
+                $mail->SMTPAuth   = true;  
+                $mail->isHTML(true);  
+                $mail->CharSet = 'UTF-8'; 
+                
+                $mail->setFrom('enlectic@gmail.com', 'CMS Blog Admin');
+                $mail->addAddress($email, "Blog User");
+                $mail->Subject = 'Verify Email using OTP';
+                $mail->Body = '<p style="background-color:#000; color:#fff;">Your OTP is '. $otpmail .'.<br/>Please click to enter OTP and verify email
+                <a href="https://blog-by-shreyas.000webhostapp.com/checkemail.php?email='.$email.'">https://blog-by-shreyas.000webhostapp.com/checkemail.php?email='.$email.'</a>
+                </p>';
+    
+                if($mail->send())
+                {
+                    $emailSent = true;
+                    $success = "You will receive an OTP on your mail account for verification purpose only!";
+                }
+                else
+                {
+                    echo 'Email send limit exceeded, try after sometime';
+                }
+            }    
 
             //header("location:checkemail.php?email='$email'");
             // login_user($_POST['username'], $_POST['password']);
@@ -246,3 +245,4 @@
 </body>
 
 </html>
+
