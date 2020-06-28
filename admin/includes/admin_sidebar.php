@@ -18,6 +18,14 @@
           <span>Home</span></a>
       </li>
 
+      <?php if(isset($_SESSION['username'])): ?> 
+      <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="fas fa-users"></i>
+            <span>Online Users: </span><span class="usersonline"> <?php //echo users_online(); ?></span></a>
+        </li> 
+      <?php endif; ?>   
+
       <!-- Divider -->
       <hr class="sidebar-divider my-0">
 

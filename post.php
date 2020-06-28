@@ -1,9 +1,10 @@
 <?php include "includes/db.php"; ?>
+<?php include "includes/header.php"; ?>
 <?php
-    if(isset($_POST['liked']))
+    if(isset($_POST['like']))
     {
-        $post_id = $_POST['post_id'];
-        $user_id = $_POST['user_id'];
+        $post_id = $_GET['p_id'];
+        $user_id = $_SESSION['user_id'];
 
         //Fetching the right posts
         $searchPost = "select * from posts where post_id = {$post_id}";
@@ -12,16 +13,17 @@
         $likes = $row['likes'];
     
         //Update posts with likes
-        mysqli_query($connection, "update posts set likes = {$likes} + 1 where post_id = {$post_id}");
-
+        $dq1=mysqli_query($connection, "update posts set likes = {$likes} + 1 where post_id = {$post_id}");
+        confirmQuery($dq1);
         //Create likes for post
-        mysqli_query($connection, "insert into likes (user_id, post_id) values($user_id, $post_id)");
+        $uq1=mysqli_query($connection, "insert into likes (user_id, post_id) values($user_id, $post_id)");
+        confirmQuery($uq1);
     }
 
-    if(isset($_POST['unliked']))
+    if(isset($_POST['unlike']))
     {
-        $post_id = $_POST['post_id'];
-        $user_id = $_POST['user_id'];
+        $post_id = $_GET['p_id'];
+        $user_id = $_SESSION['user_id'];
 
         //Fetching the right posts
         $searchPost = "select * from posts where post_id = {$post_id}";
@@ -30,13 +32,13 @@
         $likes = $row['likes'];
     
         //Delete likes for post
-        mysqli_query($connection, "delete from likes where user_id={$user_id} and post_id={$post_id}");
-
+        $dq=mysqli_query($connection, "delete from likes where user_id={$user_id} and post_id={$post_id}");
+        confirmQuery($dq);
         //Update posts with likes
-        mysqli_query($connection, "update posts set likes = {$likes} - 1 where post_id = {$post_id}");
+        $uq=mysqli_query($connection, "update posts set likes = {$likes} - 1 where post_id = {$post_id}");
+        confirmQuery($uq);
     }
 ?>
-<?php include "includes/header.php"; ?>
 <!-- Sidebar -->
 <?php include "includes/sidebar.php"; ?>
     <!-- End of Sidebar -->
@@ -80,6 +82,7 @@
                         {
                             while($row = mysqli_fetch_assoc($postResult))
                             {
+                                $post_id  = $row['post_id'];
                                 $post_title = $row['post_title'];
                                 $post_author = $row['post_user'];
                                 $post_date = $row['post_date'];
@@ -107,22 +110,36 @@
                                 ?>
                                 <hr>
 
-                                <div class="row">
-                                    <p class="pull-right" style="margin-left:2.5%">
-                                        <a style="text-decoration:none;" class="<?php echo userLikedThisPost($p_id) ? 'unlike' : 'like' ?>" href="" data-toggle="tooltip" data-placement="top" title="<?php echo userLikedThisPost($p_id) ? 'I liked this before' : 'Want to like it?' ?>">
-                                        <span class="<?php echo userLikedThisPost($p_id) ? 'fas fa-thumbs-down' : 'fas fa-thumbs-up' ?>"></span> <?php echo userLikedThisPost($p_id) ? 'Unlike' : 'Like' ?>
-                                        </a>
-                                    </p>
+                                <div class="clearfix">
+                                    <div class="float-right">
+                                        <form method="post"> 
+                                            <!-- <button type="submit"><a style="text-decoration:none" class="<?php //echo userLikedThisPost($p_id) ? 'unlike' : 'like' ?>" href="" data-toggle="tooltip" data-placement="top" title="<?php //echo userLikedThisPost($p_id) ? 'I liked this before' : 'Want to like it?' ?>">
+                                            <span class="<?php //echo userLikedThisPost($p_id) ? 'fas fa-thumbs-down' : 'fas fa-thumbs-up' ?>"></span> <?php //echo userLikedThisPost($p_id) ? 'Unlike' : 'Like' ?></button>
+                                            </a> -->
+                                            <?php
+                                                $user_id = $_SESSION['user_id'];
+                                                $likeQuery = "select * from likes where post_id=$p_id and user_id=$user_id";
+                                                $likesResult = mysqli_query($connection, $likeQuery);
+                                            ?>
+                                            <?php if(mysqli_num_rows($likesResult) >= 1): ?>
+                                                <button style="background-color: #e7e7e7;" type="submit" name="unlike"><a style="text-decoration:none" href="" data-toggle="tooltip" data-placement="top" title="I liked this before">
+                                                <span class="fas fa-thumbs-down"></span> Dislike</a></button>
+                                            <?php else: ?>
+                                                <button style="background-color: #e7e7e7;" type="submit" name="like"><a style="text-decoration:none" href="" data-toggle="tooltip" data-placement="top" title="Want to like it?">
+                                                <span class="fas fa-thumbs-up"></span> Like</a></button>
+                                            <?php endif; ?> 
+                                        </form>       
+                                    </div>
                                 </div>
                                 
                                     <?php else: ?>
-                                    <div class="container row">
-                                        <p class="pull-right likes">You need to <a href="/cms-theme/login.php">login</a> to like</p>
-                                    </div>
+                                    <div class="clearfix">
+                                        <div class="float-right likes">You need to <a href="/cms-theme/login">login</a> to like</p>
+                                    </div>   
 
                                     <?php endif; ?>
-                                <div class="container row">
-                                    <p class="pull-right likes">Likes: <?php getPostLikes($p_id); ?></p>
+                                <div class="clearfix">
+                                    <p class="float-right likes">Likes: <?php getPostLikes($p_id); ?></p>
                                 </div>
                                 <hr/>
                     <?php    
@@ -183,7 +200,9 @@
                     <hr>
 
                     <!-- Posted Comments -->
-                    
+                    <div class="page-header">
+                            <h4>Comments</h4><br/>
+                        </div> 
                     <?php
                         $query = "select * from comments where comment_post_id = {$p_id} ";
                         $query .= "and comment_status = 'approved' ";
@@ -198,10 +217,7 @@
                             $comment_date = $row['comment_date'];
                             $comment_content = $row['comment_content'];
                             $comment_author = $row['comment_author'];
-                    ?>
-                        <div class="page-header">
-                            <h4>Comments</h4><br/>
-                        </div>    
+                    ?>   
                         <!-- Comment -->
                         <div class="media">
                             <a class="pull-left" href="#">
@@ -214,6 +230,7 @@
                                 <?php echo $comment_content; ?>
                             </div>
                         </div>
+                        <hr/>
                         <!-- Comment -->
 
                     <?php        

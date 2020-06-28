@@ -232,7 +232,7 @@
     //********** GENERAL HELPER FUNCTIONS **********//
     function userLikedThisPost($post_id)
     {
-        $result = query("select * from likes where user_id=".loggedInUserId()." and post_id={$post_id}");
+        $result = query("select * from likes where user_id=".$_SESSION['user_id']." and post_id={$post_id}");
         confirmQuery($result);
         return mysqli_num_rows($result) >= 1 ? true : false;
     }

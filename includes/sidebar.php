@@ -75,7 +75,16 @@
                   
       <!-- Divider -->
       <hr class="sidebar-divider">
-        
+      <?php if(isset($_SESSION['username'])): ?>  
+      <li class="nav-item">
+          <a class="nav-link" href="#">
+            <i class="fas fa-users"></i>
+            <span>Online Users: </span><span class="usersonline"> <?php //echo users_online(); ?></span></a>
+        </li>    
+
+        <!-- Divider -->
+      <hr class="sidebar-divider">
+      <?php endif; ?>
 
         <li class="nav-item">
           <a class="nav-link" href="contact.php">

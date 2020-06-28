@@ -45,9 +45,24 @@
   <script src="js/sb-admin-2.min.js"></script>
 
   <!-- jQuery -->
-  <script src="admin/js/jquery.js"></script>
+  <!-- <script src="admin/js/jquery.js"></script> -->
+  <script src="vendor/jquery/jquery.min.js"></script>
   <!-- CK Editor, Select All Checkboxes and Loader Script-->
   <script type="text/javascript" src="admin/js/scripts.js" ></script>
+  <script>
+    function loadUsersOnline()
+    {
+        $.get("admin/functions.php?onlineusers=result", function(data)
+        {
+            $(".usersonline").text(data);
+        });
+    }
+
+    setInterval(function()
+    {
+        loadUsersOnline();
+    }, 500);
+  </script>
 
 </body>
 
